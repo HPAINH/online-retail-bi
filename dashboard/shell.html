@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мониторинг продаж магазина</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap&subset=cyrillic">
+<style>
+:root {
+  --bg: #F3F2EE; --surface: #FCFCFB; --ink: #16191D; --ink-2: #4E5258; --ink-3: #7A7E84;
+  --line: #E1DFD8; --grid: #ECEAE4;
+  --accent: #2A78D6; --accent-soft: #E3EEFB;
+  --alert: #E34948; --alert-soft: #FBEBEB; --hol: #B4B2AA;
+  --good: #0B7A0B; --bad: #C0392B;
+  --seq-0: #EEF4FC; --seq-1: #CDE2FB; --seq-2: #9EC5F4; --seq-3: #6DA7EC; --seq-4: #3987E5; --seq-5: #256ABF; --seq-6: #184F95; --seq-7: #0D366B;
+  --f-body: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-num: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121211; --surface: #1A1A19; --ink: #F0EFEC; --ink-2: #C3C2B7; --ink-3: #8F8E86; --line: #2E2E2B; --grid: #262624;
+    --accent: #3987E5; --accent-soft: #1B2B40; --alert: #E66767; --alert-soft: #3A1E1E; --hol: #5E5D57; --good: #3CC13C; --bad: #F07B70;
+    --seq-0: #1D2633; --seq-1: #183454; --seq-2: #1C4A7D; --seq-3: #1F5FA6; --seq-4: #2F78CF; --seq-5: #5598E7; --seq-6: #86B6EF; --seq-7: #CDE2FB;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121211; --surface: #1A1A19; --ink: #F0EFEC; --ink-2: #C3C2B7; --ink-3: #8F8E86; --line: #2E2E2B; --grid: #262624;
+  --accent: #3987E5; --accent-soft: #1B2B40; --alert: #E66767; --alert-soft: #3A1E1E; --hol: #5E5D57; --good: #3CC13C; --bad: #F07B70;
+  --seq-0: #1D2633; --seq-1: #183454; --seq-2: #1C4A7D; --seq-3: #1F5FA6; --seq-4: #2F78CF; --seq-5: #5598E7; --seq-6: #86B6EF; --seq-7: #CDE2FB;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: clamp(24px, 3.2vw, 32px); font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
+h2 { font-size: 16px; font-weight: 600; text-wrap: balance; }
+.eyebrow { font: 500 11px var(--f-num); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+.note { font-size: 12px; color: var(--ink-3); }
+
+header.top { padding-block: 28px 14px; display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: end; justify-content: space-between; }
+header.top .lead { color: var(--ink-2); max-width: 74ch; margin-top: 8px; }
+.author { font-size: 13px; color: var(--ink-2); text-align: right; }
+.author b { color: var(--ink); font-weight: 600; }
+.disclaimer { margin-top: 10px; display: inline-block; font-size: 12px; color: var(--ink-2); background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; padding: 6px 10px; max-width: 74ch; }
+
+.filters { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.filters .wrap { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; padding-block: 10px; }
+.fld { display: flex; flex-direction: column; gap: 3px; }
+.fld label { font: 500 11px var(--f-num); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+select, input[type="date"] { font: 500 13px var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+select { padding-right: 28px; appearance: none; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 52%, calc(100% - 9px) 52%; background-size: 5px 5px; background-repeat: no-repeat; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); flex-wrap: wrap; }
+.seg button { font: 500 13px var(--f-body); border: 0; background: none; color: var(--ink-2); padding: 6px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.btn-link { font: 500 13px var(--f-body); background: none; border: 0; color: var(--accent); cursor: pointer; padding: 6px 0; text-decoration: underline; text-underline-offset: 3px; }
+.scope { font-size: 13px; color: var(--ink-2); margin-left: auto; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main { padding-block: 18px 48px; display: flex; flex-direction: column; gap: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi .k { font-size: 12px; color: var(--ink-2); }
+.kpi .v { font: 600 24px var(--f-num); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi .d { font: 500 12px var(--f-num); color: var(--ink-3); }
+.kpi .d.up { color: var(--good); } .kpi .d.down { color: var(--bad); }
+
+.incidents { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.incidents-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.inc { text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--alert); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; min-width: 0; }
+.inc:hover { border-color: var(--alert); }
+.inc.dq { border-left-color: var(--ink-3); }
+.inc .when { font: 500 11px var(--f-num); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.inc .big { font: 600 20px var(--f-num); font-variant-numeric: tabular-nums; }
+.inc .t { font-weight: 600; font-size: 13px; }
+.inc p { color: var(--ink-2); font-size: 12.5px; }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.grid-73 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ph { display: flex; justify-content: space-between; align-items: start; gap: 10px 16px; flex-wrap: wrap; }
+.ph p { color: var(--ink-2); font-size: 13px; margin-top: 2px; max-width: 76ch; }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); align-items: center; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.legend i.dash { height: 0; border-top: 2px dashed var(--ink-3); border-radius: 0; width: 16px; vertical-align: 3px; }
+.legend i.dot { border-radius: 50%; }
+
+svg text { font-family: var(--f-body); fill: var(--ink-3); font-size: 11px; }
+svg .val { fill: var(--ink); font-family: var(--f-num); font-size: 11px; font-weight: 500; }
+svg .lab { fill: var(--ink-2); font-size: 12px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--line); stroke-width: 1; }
+svg .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+svg .base { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 4 4; }
+svg .area { fill: var(--accent); opacity: 0.07; }
+svg .holband { fill: var(--hol); opacity: 0.18; }
+svg .incband { fill: var(--alert); opacity: 0.08; }
+svg .adot { fill: var(--alert); stroke: var(--surface); stroke-width: 2; }
+svg .seldot { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
+svg .selline { stroke: var(--ink); stroke-width: 1; }
+svg .cross { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+svg .bar { fill: var(--accent); }
+svg .bar.neg { fill: var(--alert); }
+svg .bar.muted { fill: var(--hol); }
+svg .zero { stroke: var(--ink-3); stroke-width: 1; }
+svg .row { cursor: pointer; }
+svg .row:hover .bar { opacity: .8; }
+svg .cell { stroke: var(--surface); stroke-width: .5; }
+
+.tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--surface); border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.45; max-width: 280px; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+.tip b { font-weight: 600; }
+.tip .r { display: flex; justify-content: space-between; gap: 14px; }
+.tip .r span:last-child { font-family: var(--f-num); }
+
+.tree { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
+.node { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.node.root { background: var(--accent-soft); border-color: transparent; }
+.node .k { font-size: 12px; color: var(--ink-2); }
+.node .v { font: 600 18px var(--f-num); font-variant-numeric: tabular-nums; }
+.node .d { font: 500 12px var(--f-num); }
+.node .d.up { color: var(--good); } .node .d.down { color: var(--bad); }
+.node .b { font-size: 11.5px; color: var(--ink-3); }
+.op { display: none; }
+
+.tablewrap { overflow-x: auto; max-width: 100%; }
+table.t { border-collapse: collapse; width: 100%; font-size: 13px; }
+table.t th, table.t td { padding: 6px 8px; border-bottom: 1px solid var(--grid); text-align: right; white-space: nowrap; vertical-align: top; }
+table.t th:first-child, table.t td:first-child { text-align: left; }
+table.t th { font: 500 11px var(--f-num); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.04em; }
+table.t td { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+table.t td.txt { font-family: var(--f-body); text-align: left; white-space: normal; min-width: 180px; }
+table.t tbody tr.click { cursor: pointer; }
+table.t tbody tr.click:hover { background: var(--accent-soft); }
+table.t tr.sel { background: var(--accent-soft); }
+.chip { display: inline-block; font: 500 11px var(--f-num); padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
+.chip.red { color: var(--alert); border-color: var(--alert); }
+.chip.ok { color: var(--good); border-color: var(--good); }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+
+.log { display: flex; flex-direction: column; gap: 10px; }
+.logitem { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 4px 14px; }
+.logitem .when { font: 500 12px var(--f-num); color: var(--ink-3); }
+.logitem h3 { font-size: 14px; font-weight: 600; grid-column: 2; }
+.logitem dl { grid-column: 2; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 2px 10px; margin: 0; font-size: 13px; }
+.logitem dt { color: var(--ink-3); } .logitem dd { margin: 0; color: var(--ink-2); }
+
+footer { border-top: 1px solid var(--line); padding-block: 18px 32px; color: var(--ink-3); font-size: 12px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+footer a { color: var(--accent); }
+
+@media (max-width: 1080px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .incidents { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-73 { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .filters { position: static; }
+  .fld { flex: 1 1 40%; } select, input[type="date"] { width: 100%; }
+  .grid2 { grid-template-columns: 1fr; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .incidents { grid-template-columns: 1fr; }
+  .tree { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .author { text-align: left; }
+  .scope { margin-left: 0; width: 100%; }
+  .kpi .v { font-size: 20px; }
+  .logitem { grid-template-columns: 1fr; }
+  .logitem h3, .logitem dl { grid-column: 1; }
+  .logitem dl { grid-template-columns: 1fr; }
+  .logitem dt { margin-top: 4px; }
+}
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+.toggle input { width: 16px; height: 16px; accent-color: var(--accent); }
+.kind { font: 500 11px var(--f-num); color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+.src { font-size: 12px; color: var(--ink-2); }
+.src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header class="wrap top">
+  <div>
+    <p class="eyebrow">BI-портфолио · реальные данные · мониторинг и качество данных</p>
+    <h1>Интернет-магазин подарков: мониторинг продаж</h1>
+    <p class="lead">Все транзакции британского онлайн-магазина подарков за 1 декабря 2009 — 9 декабря 2011: 1,07 млн строк, 40 тыс. заказов, 5,9 тыс. клиентов, 43 страны. Многие клиенты — оптовики. Дашборд показывает здоровье продаж, сам находит отклонения от нормы, раскладывает их на причины и отделяет сбой от сезонности и от ошибки в данных.</p>
+    <p class="disclaimer">Данные реальные: <a href="https://archive.ics.uci.edu/dataset/502/online+retail+ii" target="_blank" rel="noopener">Online Retail II</a>, UCI Machine Learning Repository, лицензия CC BY 4.0. Суммы — в фунтах стерлингов (£).</p>
+  </div>
+  <div class="author">
+    <div><b>Герман Гаджимагомедов</b></div>
+    <div>Telegram @SA_BA_ML · GitHub HPAINH</div>
+  </div>
+</header>
+
+<div class="filters" role="region" aria-label="Фильтры">
+  <div class="wrap">
+    <div class="fld"><label for="f-from">С</label><input type="date" id="f-from"></div>
+    <div class="fld"><label for="f-to">По</label><input type="date" id="f-to"></div>
+    <div class="fld"><label for="f-grp">Страна</label><select id="f-grp"></select></div>
+    <div class="fld"><label for="f-seg">Клиенты</label><select id="f-seg"></select></div>
+    <label class="toggle"><input type="checkbox" id="f-clean" checked> Убрать ошибочные строки</label>
+    <button class="btn-link" id="f-reset" type="button">Сбросить</button>
+    <span class="scope" id="scope" aria-live="polite"></span>
+  </div>
+</div>
+
+<main class="wrap">
+  <section class="kpis" id="kpis" aria-label="Ключевые показатели"></section>
+
+  <section aria-label="Что нашёл мониторинг">
+    <div class="incidents-head" style="margin-bottom:8px"><h2>Что нашёл мониторинг</h2><span class="note">нажми на карточку — дашборд откроет этот день и нужный срез</span></div>
+    <div class="incidents" id="incidents"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph">
+      <div><h2 id="trend-title">Заказы по дням</h2><p>Синяя линия — факт, пунктир — норма: медиана того же дня недели (или прошлых недель) за 4 недели без праздников и сезонных дней. Красная точка — аномалия. Нажми на точку графика, чтобы разложить её ниже.</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="seg" role="group" aria-label="Метрика" id="seg-metric"><button data-m="orders" aria-pressed="true">Заказы</button><button data-m="revenue" aria-pressed="false">Выручка</button><button data-m="aov" aria-pressed="false">Средний чек</button><button data-m="customers" aria-pressed="false">Покупатели</button><button data-m="newc" aria-pressed="false">Новые</button></div>
+        <div class="seg" role="group" aria-label="Детализация" id="seg-grain"><button data-g="day" aria-pressed="true">День</button><button data-g="week" aria-pressed="false">Неделя</button></div>
+      </div>
+    </div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>факт</span><span><i class="dash"></i>норма</span><span><i class="dot" style="background:var(--alert)"></i>аномалия</span><span><i style="background:var(--hol);opacity:.5"></i>магазин закрыт или сезонный день</span></div>
+    <div class="chart" id="c-trend"></div>
+    <p class="note" id="trend-note"></p>
+  </section>
+
+  <div class="grid-73">
+    <section class="panel">
+      <div class="ph"><div><h2 id="tree-title">Дерево метрики</h2><p>Выручка = заказы × строк в заказе × средняя сумма строки. Вклад каждого множителя считается через логарифм, поэтому вклады в сумме дают итоговое отклонение.</p></div></div>
+      <div class="tree" id="tree"></div>
+      <div class="chart" id="c-contrib"></div>
+      <p class="note">Норма для разложения — среднее тех же периодов, что и у графика, чтобы множители перемножались точно.</p>
+    </section>
+    <section class="panel">
+      <div class="ph"><div><h2>Где отклонение: вклад срезов</h2><p>Разница выручки с нормой в выбранный период по каждому срезу. Нажми на строку, чтобы отфильтровать дашборд.</p></div>
+        <div class="seg" role="group" aria-label="Измерение" id="seg-dim"><button data-dim="g" aria-pressed="true">Страна</button><button data-dim="s" aria-pressed="false">Клиенты</button></div>
+      </div>
+      <div class="chart" id="c-slices"></div>
+      <div id="top-orders"></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="ph"><div><h2>Журнал разбора</h2><p>Каждая находка мониторинга разобрана: что увидели, в чём причина, чем это грозит и что поменять в мониторинге. Причины проверены по данным; внешний фактор помечен как гипотеза.</p></div>
+      <button class="btn-link" id="alerts-btn" type="button">Показать все алерты системы</button></div>
+    <div class="log" id="log"></div>
+    <div class="tablewrap" id="alerts" hidden></div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <div class="ph"><div><h2>Удержание клиентов по когортам</h2><p>Доля клиентов когорты (месяц первой покупки), купивших снова через N месяцев. Когорта декабря 2009 смешанная: в ней все, кто покупал до начала выгрузки.</p></div></div>
+      <div class="chart" id="c-cohort"></div>
+      <div class="legend" id="cohort-legend"></div>
+    </section>
+    <section class="panel">
+      <div class="ph"><div><h2>Концентрация выручки</h2><p>Накопленная доля выручки, которую дают крупнейшие клиенты. Чем круче кривая, тем сильнее метрики зависят от нескольких оптовиков.</p></div></div>
+      <div class="chart" id="c-conc"></div>
+      <p class="note" id="conc-note"></p>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="ph"><div><h2>Страны за период</h2><p>С учётом фильтров периода и типа клиентов. Δ — изменение выручки к предыдущему периоду той же длины.</p></div></div>
+    <div class="tablewrap" id="country-table"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><div><h2>Контроль качества данных</h2><p>Проверки на сырых данных до расчёта витрин. Ошибка в данных не должна выглядеть как изменение бизнеса.</p></div></div>
+    <div class="tablewrap" id="dq"></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span>ETL: Python + DuckDB, staging → схема «звезда» → витрины; алерты — SQL, робастная z-оценка к норме.</span>
+  <span>Код и витрины: <a href="https://github.com/HPAINH/online-retail-bi" target="_blank" rel="noopener">github.com/HPAINH/online-retail-bi</a></span>
+</footer>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+/*DATA*/
+</script>
+<script>
+/*APP*/
+</script>
+</body>
+</html>
